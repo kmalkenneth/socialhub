@@ -58,4 +58,13 @@ class User extends Authenticatable
     protected $appends = [
         'profile_photo_url',
     ];
+
+
+    /**
+     * Get the Social Networks for the user.
+     */
+    public function socialNetwork()
+    {
+        return $this->hasMany(SocialNetwork::class);
+    }
 }

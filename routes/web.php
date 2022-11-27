@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\SocialNetworkController;
+use App\Models\SocialNetwork;
 use Atymic\Twitter\Facade\Twitter;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use App\Enums\BrandEnum;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,36 +37,37 @@ Route::middleware([
 
 
 
-Route::get('twitter/callback', ['as' => 'twitter.callback', static function () {
-    // You should set this route on your Twitter Application settings as the callback
-    // https://apps.twitter.com/app/YOUR-APP-ID/settings
-    if (Session::has('oauth_request_token')) {
-        $twitter = Twitter::usingCredentials(session('oauth_request_token'), session('oauth_request_token_secret'));
-        $token = $twitter->getAccessToken(request('oauth_verifier'));
+Route::get('/twitter/callback', [static function () {
+    $validated = request()->validate([
+        'code' => 'required',
+    ]);
 
-        if (!isset($token['oauth_token_secret'])) {
-            return Redirect::route('twitter.error')->with('flash_error', 'We could not log you in on Twitter.');
-        }
+    $response = Http::baseUrl('https://api.twitter.com/')->withHeaders([
+        'Accept' => '*/*',
+    ])
+        ->withBasicAuth(env('TWITTER_CLIENT_ID'), env('TWITTER_CLIENT_SECRET'))
+        ->asForm()->post('/2/oauth2/token', [
+            'code' => request()->query('code'),
+            'grant_type' => 'authorization_code',
+            'client_id' => env('TWITTER_CLIENT_ID'),
+            'redirect_uri' => route("twitter.callback"),
+            'code_verifier' => 'challenge'
+        ]);
 
-        // use new tokens
-        $twitter = Twitter::usingCredentials($token['oauth_token'], $token['oauth_token_secret']);
-        $credentials = $twitter->getCredentials();
+    $body = json_decode($response->body());
 
-        if (is_object($credentials) && !isset($credentials->error)) {
-            // $credentials contains the Twitter user object with all the info about the user.
-            // Add here your own user logic, store profiles, create new users on your tables...you name it!
-            // Typically you'll want to store at least, user id, name and access tokens
-            // if you want to be able to call the API on behalf of your users.
+    $token = $body->access_token;
+    $refreshToken = $body->refresh_token;
+    // $expiresIn = $body->expiresIn;
 
-            // This is also the moment to log in your users if you're using Laravel's Auth class
-            // Auth::login($user) should do the trick.
+    $socialNetwork = new SocialNetwork;
+    $socialNetwork->user_id = Auth::user()->id;
+    $socialNetwork->brand = 'twitter';
+    $socialNetwork->acces_token = $token;
+    $socialNetwork->refresh_token = $refreshToken;
 
-            Session::put('access_token', $token);
 
-            return Redirect::to('/')->with('notice', 'Congrats! You\'ve successfully signed in!');
-        }
-    }
+    $socialNetwork->save();
 
-    return Redirect::route('twitter.error')
-        ->with('error', 'Crab! Something went wrong while signing you up!');
-}]);
+    return redirect('/dashboard');
+}])->name('twitter.callback');
