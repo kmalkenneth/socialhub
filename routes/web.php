@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use App\Enums\BrandEnum;
 use App\Http\Controllers\TwitterController;
+use App\Http\Livewire\Twitter as LivewireTwitter;
 use Illuminate\Support\Facades\DB;
 
 /*
@@ -32,9 +33,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified'
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/twitter', LivewireTwitter::class)->name('twitter');
 });
 
 
@@ -44,4 +43,5 @@ Route::middleware([
 Route::controller(TwitterController::class)->group(function () {
     Route::get('/twitter/callback',  'callback')->name('twitter.callback');
     Route::post('/twitter/revoke', 'revoke')->name('twitter.revoke');
+    Route::post('/twitter/tweets', 'tweets')->name('twitter.tweets');
 });

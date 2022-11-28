@@ -30,4 +30,17 @@ class TwitterController extends Controller
 
         return back()->with('Could not sign out.');
     }
+
+
+    public function tweets(Request $request, TwitterApi $api)
+    {
+        $validated = $request->validate([
+            'text' => 'required',
+        ]);
+
+        return dd($request);
+        $api->tweets($request->text);
+
+        return back();
+    }
 }

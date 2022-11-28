@@ -6,6 +6,7 @@ use App\Models\Twitter;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Nette\Utils\Strings;
 
 class TwitterApi
 {
@@ -25,7 +26,7 @@ class TwitterApi
             . "&scope=tweet.write tweet.read users.read follows.read offline.access&state=state&code_challenge=challenge&code_challenge_method=plain";
     }
 
-    private  function Token()
+    public  function Token()
     {
         return  Twitter::where('user_id', '=', Auth::user()->id)->first();
     }
@@ -84,6 +85,8 @@ class TwitterApi
             $token->expires_in = now()->addSeconds($body->expires_in);
 
             $token->save();
+
+            return $token;
         }
     }
 
@@ -123,6 +126,34 @@ class TwitterApi
                     'user.fields' => 'profile_image_url',
                 ]);
 
+            if ($response->successful()) {
+                $body = json_decode($response);
+                return $body->data;
+            }
+        }
+
+        return null;
+    }
+
+    public function tweets(string $text)
+    {
+        $token = $this->token();
+
+        if ($token) {
+
+            if (now()->gte($token->expires_in)) {
+                $token = $this->refresh();
+            }
+
+
+            $response = $this->http
+                ->contentType('application/json')
+                ->withToken($token->acces_token)
+
+                ->post('/tweets', ['text' => $text]);
+
+
+            // return dd($text);
             if ($response->successful()) {
                 $body = json_decode($response);
                 return $body->data;
