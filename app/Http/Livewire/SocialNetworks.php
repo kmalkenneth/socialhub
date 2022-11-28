@@ -2,11 +2,39 @@
 
 namespace App\Http\Livewire;
 
+use App\Http\Controllers\TwitterController;
+use App\Models\SocialNetwork;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Livewire\Component;
 
 class SocialNetworks extends Component
 {
 
+
+
+    public $twitterName;
+    public $twitterImgUri;
+    public $twitterUsername;
+
+    public function mount()
+    {
+
+
+        $twitterUser =
+            app('App\Http\Controllers\TwitterController')->userMe();
+
+
+
+        // dd($twitterUser);
+        if ($twitterUser) {
+
+            $this->twitterName = $twitterUser->name;
+            $this->twitterImgUri = $twitterUser->profile_image_url;
+            $this->twitterUsername = $twitterUser->username;
+        }
+    }
 
 
 

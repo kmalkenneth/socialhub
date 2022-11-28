@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('brand', ['Twitter', 'Linkedin', 'Redid']);
             $table->string('acces_token');
             $table->string('refresh_token');
+            $table->timestamp('expires_in');
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users');
         });
