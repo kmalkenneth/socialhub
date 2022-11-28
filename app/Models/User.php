@@ -63,8 +63,8 @@ class User extends Authenticatable
     /**
      * Get the Social Networks for the user.
      */
-    public function socialNetwork()
+    public function twitter()
     {
-        return $this->hasMany(SocialNetwork::class);
+        return $this->hasMany(Twitter::class);
     }
 }

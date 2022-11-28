@@ -43,6 +43,5 @@ Route::middleware([
 
 Route::controller(TwitterController::class)->group(function () {
     Route::get('/twitter/callback',  'callback')->name('twitter.callback');
-    Route::get('/twitter/refresh', 'refresh')->name('twitter.refresh');
     Route::post('/twitter/revoke', 'revoke')->name('twitter.revoke');
 });

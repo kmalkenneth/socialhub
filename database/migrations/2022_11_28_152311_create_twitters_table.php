@@ -13,10 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('social_networks', function (Blueprint $table) {
+        Schema::create('twitters', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->enum('brand', ['Twitter', 'Linkedin', 'Redid']);
             $table->string('acces_token');
             $table->string('refresh_token');
             $table->timestamp('expires_in');
@@ -32,6 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('social_networks');
+        Schema::dropIfExists('twitters');
     }
 };
