@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use App\Enums\BrandEnum;
+use App\Http\Controllers\MastodonController;
+use App\Http\Controllers\TwitterController;
+use App\Http\Livewire\Twitter as LivewireTwitter;
+use App\Http\Livewire\Mastodon as LivewireMastodon;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,44 +35,21 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified'
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/twitter', LivewireTwitter::class)->name('twitter');
+    Route::get('/mastodon', LivewireMastodon::class)->name('mastodon');
 });
 
 
 
-Route::get('/twitter/callback', [static function () {
-    $validated = request()->validate([
-        'code' => 'required',
-    ]);
-
-    $response = Http::baseUrl('https://api.twitter.com/')->withHeaders([
-        'Accept' => '*/*',
-    ])
-        ->withBasicAuth(env('TWITTER_CLIENT_ID'), env('TWITTER_CLIENT_SECRET'))
-        ->asForm()->post('/2/oauth2/token', [
-            'code' => request()->query('code'),
-            'grant_type' => 'authorization_code',
-            'client_id' => env('TWITTER_CLIENT_ID'),
-            'redirect_uri' => route("twitter.callback"),
-            'code_verifier' => 'challenge'
-        ]);
-
-    $body = json_decode($response->body());
-
-    $token = $body->access_token;
-    $refreshToken = $body->refresh_token;
-    // $expiresIn = $body->expiresIn;
-
-    $socialNetwork = new SocialNetwork;
-    $socialNetwork->user_id = Auth::user()->id;
-    $socialNetwork->brand = 'twitter';
-    $socialNetwork->acces_token = $token;
-    $socialNetwork->refresh_token = $refreshToken;
 
 
-    $socialNetwork->save();
+Route::controller(TwitterController::class)->group(function () {
+    Route::get('/twitter/callback',  'callback')->name('twitter.callback');
+    Route::post('/twitter/revoke', 'revoke')->name('twitter.revoke');
+    Route::post('/twitter/tweets', 'tweets')->name('twitter.tweets');
+});
 
-    return redirect('/dashboard');
-}])->name('twitter.callback');
+Route::controller(MastodonController::class)->group(function () {
+    Route::get('/mastodon/callback',  'callback')->name('mastodon.callback');
+    Route::post('/mastodon/revoke', 'revoke')->name('mastodon.revoke');
+});

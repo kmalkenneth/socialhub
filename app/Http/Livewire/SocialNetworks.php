@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire;
 
+use App\Services\MastodonApi;
+use App\Services\TwitterApi;
 use Livewire\Component;
 
 class SocialNetworks extends Component
@@ -9,17 +11,42 @@ class SocialNetworks extends Component
 
 
 
+    public $twitterName;
+    public $twitterImgUri;
+    public $twitterUsername;
 
-    public function twitterLogin()
+    public $mastodonName;
+    public $mastodonImgUri;
+    public $mastodonUsername;
 
+    public function mount(TwitterApi $api, MastodonApi $mApi)
     {
-        return redirect()->to(
-            "https://twitter.com/i/oauth2/authorize?response_type=code&client_id="
-                . env("TWITTER_CLIENT_ID")
-                . "&redirect_uri="
-                . route('twitter.callback')
-                . "&scope=tweet.write tweet.read users.read follows.read offline.access&state=state&code_challenge=challenge&code_challenge_method=plain"
-        );
+        $twitterUser = $api->userMe();
+        $MUser = $mApi->userMe();
+
+        if ($twitterUser) {
+            $this->twitterName = $twitterUser->name;
+            $this->twitterImgUri = $twitterUser->profile_image_url;
+            $this->twitterUsername = $twitterUser->username;
+        }
+
+        if ($MUser) {
+            $this->mastodonName = $MUser->display_name;
+            $this->mastodonImgUri = $MUser->avatar;
+            $this->mastodonUsername = $MUser->username;
+        }
+    }
+
+
+
+    public function twitterLogin(TwitterApi $api)
+    {
+        return redirect()->to($api->oauthUri);
+    }
+
+    public function mastodonLogin(MastodonApi $api)
+    {
+        return redirect()->to($api->oauthUri);
     }
 
     public function render()
